@@ -1,2 +1,2 @@
-# Piekļuves_darbs
+# Piekļuves darbs
 Reinforcement Learning With PyTorch and Pygame
