@@ -16,7 +16,7 @@ class Direction(Enum):
 
 Point = namedtuple('Point', 'x, y')
 
-# rgb colors
+# rgb
 WHITE = (255, 255, 255)
 RED = (200,0,0)
 BLUE1 = (0, 0, 255)
@@ -63,17 +63,17 @@ class SnakeGameAI:
 
     def play_step(self, action):
         self.frame_iteration += 1
-        # 1. collect user input
+        # 1. apkopot lietotāja ievades datus.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
         
-        # 2. move
+        # 2. pārvietot
         self._move(action) # update the head
         self.snake.insert(0, self.head)
         
-        # 3. check if game over
+        # 3. pārbaudīt, vai spēle ir beigusies
         reward = 0
         game_over = False
         if self.is_collision() or self.frame_iteration > 100*len(self.snake):
@@ -81,7 +81,7 @@ class SnakeGameAI:
             reward = -10
             return reward, game_over, self.score
 
-        # 4. place new food or just move
+        # 4. novietot jaunu ēdienu vai vienkārši pārvietoties
         if self.head == self.food:
             self.score += 1
             reward = 10
@@ -89,20 +89,20 @@ class SnakeGameAI:
         else:
             self.snake.pop()
         
-        # 5. update ui and clock
+        # 5. ui un pulksteņa atjaunināšana
         self._update_ui()
         self.clock.tick(SPEED)
-        # 6. return game over and score
+        # 6. atgriešanās spēles beigas un rezultāts
         return reward, game_over, self.score
 
 
     def is_collision(self, pt=None):
         if pt is None:
             pt = self.head
-        # hits boundary
+        # trāpījuma robeža
         if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
             return True
-        # hits itself
+        # trāpa pati
         if pt in self.snake[1:]:
             return True
 
