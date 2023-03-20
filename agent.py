@@ -14,8 +14,8 @@ class Agent:
 
     def __init__(self):
         self.n_games = 0
-        self.epsilon = 0 # randomness
-        self.gamma = 0.9 # discount rate
+        self.epsilon = 0 # nejaušība
+        self.gamma = 0.9 # diskonta likme
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
@@ -34,35 +34,35 @@ class Agent:
         dir_d = game.direction == Direction.DOWN
 
         state = [
-            # Danger straight
+            # Bīstami taisni
             (dir_r and game.is_collision(point_r)) or 
             (dir_l and game.is_collision(point_l)) or 
             (dir_u and game.is_collision(point_u)) or 
             (dir_d and game.is_collision(point_d)),
 
-            # Danger right
+            # Bīstamība pa labi
             (dir_u and game.is_collision(point_r)) or 
             (dir_d and game.is_collision(point_l)) or 
             (dir_l and game.is_collision(point_u)) or 
             (dir_r and game.is_collision(point_d)),
 
-            # Danger left
+            # Bīstamība pa kreisi
             (dir_d and game.is_collision(point_r)) or 
             (dir_u and game.is_collision(point_l)) or 
             (dir_r and game.is_collision(point_u)) or 
             (dir_l and game.is_collision(point_d)),
             
-            # Move direction
+            # Pārvietošanās virziens
             dir_l,
             dir_r,
             dir_u,
             dir_d,
             
-            # Food location 
-            game.food.x < game.head.x,  # food left
-            game.food.x > game.head.x,  # food right
-            game.food.y < game.head.y,  # food up
-            game.food.y > game.head.y  # food down
+            # Pārtikas atrašanās vieta 
+            game.food.x < game.head.x,  # Pārtika pa kreisi
+            game.food.x > game.head.x,  # Pārtika pa labi
+            game.food.y < game.head.y,  # Pārtika augšā
+            game.food.y > game.head.y  # Pārtika lējā
             ]
 
         return np.array(state, dtype=int)
@@ -72,20 +72,19 @@ class Agent:
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+            mini_sample = random.sample(self.memory, BATCH_SIZE) # tupļu saraksts
         else:
             mini_sample = self.memory
 
         states, actions, rewards, next_states, dones = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, dones)
-        #for state, action, reward, nexrt_state, done in mini_sample:
-        #    self.trainer.train_step(state, action, reward, next_state, done)
+
 
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        # random moves: tradeoff exploration / exploitation
+        # nejauši gājieni: kompromiss izpēte/izmantošana
         self.epsilon = 80 - self.n_games
         final_move = [0,0,0]
         if random.randint(0, 200) < self.epsilon:
@@ -108,24 +107,24 @@ def train():
     agent = Agent()
     game = SnakeGameAI()
     while True:
-        # get old state
+        # iegūt veco stāvokli
         state_old = agent.get_state(game)
 
-        # get move
+        # pārvietoties
         final_move = agent.get_action(state_old)
 
-        # perform move and get new state
+        # veikt pārvietot un iegūt jauno stāvokli
         reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
-        # train short memory
+        # trenēt īso atmiņu
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
-        # remember
+        # atcerieties
         agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
-            # train long memory, plot result
+            # trenēt ilgu atmiņu, uzzīmēt rezultātu
             game.reset()
             agent.n_games += 1
             agent.train_long_memory()
